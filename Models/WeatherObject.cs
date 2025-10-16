@@ -11,6 +11,8 @@ namespace weather_wrapper.Models
         public required string timeZone { get; init; }
         public float tzoffset { get; init; }
         public List<Day>? days { get; init; }
+        public List<string> alerts { get; init; }
         public Dictionary<string, Station>? stations { get; init; }
+
     }
 }
