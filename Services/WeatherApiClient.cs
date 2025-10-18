@@ -21,6 +21,15 @@ namespace weather_wrapper.Services
          * [date2] > [date1]: 400 Error - Bad Request - Start date cannot be greater than End date
          * 
          * _httpClient.BaseAddress = new Uri("https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/");
+         * 
+         * NOTES: 
+         * Things to do inside the controller:- Quickly finish up in the business layer if possible
+         *  - Validate endPoints EG Check if endDate < startDate
+         *  - Transform endPoints EG last{num_days}days into startDate, endDate
+         *  - Deconstruct, validate and reconstruct params
+         *  - Check and rebuild cache before requesting apiClient 
+         *      In cache [Yes] Return, 
+         *      [No] make request, update cache then Return
          **/
 
         public WeatherApiClient(HttpClient httpClient)
@@ -69,11 +78,15 @@ namespace weather_wrapper.Services
             }
         }
 
-        public async Task<Result<WeatherObject>> GetLocationDataAsync(string location)
+        public async Task<Result<WeatherObject>> GetLocationDataAsync(string location, Dictionary<string, string> queryParams)
         {
-            var queryParams = new Dictionary<string, string>();
-            queryParams.Add("location", location);
-            return await MakeWeatherRequestAsync("location", queryParams);
+            return await MakeWeatherRequestAsync(location, queryParams);
+        }
+
+        public async Task<Result<WeatherObject>> GetTimeRangeDataAsync(string location, string startDate, string? endDate,  Dictionary<string, string> queryParams)
+        {
+            string endPoint = endDate != null ? $"{location}/{startDate}/{endDate}" : $"{location}/{startDate}";
+            return await MakeWeatherRequestAsync(endPoint, queryParams);
         }
     }
 }

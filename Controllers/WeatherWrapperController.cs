@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using weather_wrapper.Models;
@@ -27,14 +28,17 @@ namespace weather_wrapper.Controllers
         }
 
         [HttpGet("{location}")]
-        public async Task<IActionResult> GetLocation(string location)
+        public async Task<IActionResult> GetLocation(string location, [FromQuery] )
         {
             if (string.IsNullOrEmpty(location))
             {
                 return BadRequest("Location attribute cannot be empty");
             }
+            validateAndRebuildParams();
             Result<WeatherObject> results = await _apiClient.GetLocationDataAsync(location);
             return Ok(results);
         }
+
+        pu
     }
 }
