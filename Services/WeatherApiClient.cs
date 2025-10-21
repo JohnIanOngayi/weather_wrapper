@@ -42,13 +42,14 @@ namespace weather_wrapper.Services
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "My Weather Wrapper");
         }
 
-        public async Task<Result<WeatherObject>> MakeWeatherRequestAsync(string path, Dictionary<string, string> queryParams)
+        public async Task<Result<WeatherObject>> MakeWeatherRequestAsync(string path)
         {
             try
             {
-                var uriWithQuery = QueryHelpers.AddQueryString(path, queryParams);
+                //var uriWithQuery = QueryHelpers.AddQueryString(path);
 
-                var response = await _httpClient.GetAsync(uriWithQuery);
+                //var response = await _httpClient.GetAsync(uriWithQuery);
+                var response = await _httpClient.GetAsync(path);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -78,15 +79,21 @@ namespace weather_wrapper.Services
             }
         }
 
-        public async Task<Result<WeatherObject>> GetLocationDataAsync(string location, Dictionary<string, string> queryParams)
+        public async Task<Result<WeatherObject>> GetDataAsync(string location)
         {
-            return await MakeWeatherRequestAsync(location, queryParams);
+            return await MakeWeatherRequestAsync(location);
         }
 
-        public async Task<Result<WeatherObject>> GetTimeRangeDataAsync(string location, string startDate, string? endDate,  Dictionary<string, string> queryParams)
+        public async Task<Result<WeatherObject>> GetDataAsync(string location, string startDate)
         {
-            string endPoint = endDate != null ? $"{location}/{startDate}/{endDate}" : $"{location}/{startDate}";
-            return await MakeWeatherRequestAsync(endPoint, queryParams);
+            string endPoint = $"{location}/{startDate}";
+            return await MakeWeatherRequestAsync(endPoint);
+        }
+
+        public async Task<Result<WeatherObject>> GetDataAsync(string location, string startDate, string endDate)
+        {
+            string endPoint = $"{location}/{startDate}/{endDate}";
+            return await MakeWeatherRequestAsync(endPoint);
         }
     }
 }
