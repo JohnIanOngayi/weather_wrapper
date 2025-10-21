@@ -8,10 +8,10 @@ namespace weather_wrapper.Models
         public float longitude { get; init; }
         public required string resolvedAddress { get; init; }
         public required string address { get; init; }
-        public required string timeZone { get; init; }
+        public required string timezone { get; init; }
         public float tzoffset { get; init; }
         public List<Day>? days { get; init; }
-        public List<string> alerts { get; init; }
+        //public List<string>? alerts { get; init; }
         public Dictionary<string, Station>? stations { get; init; }
 
     }
