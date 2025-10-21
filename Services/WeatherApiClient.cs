@@ -11,6 +11,7 @@ namespace weather_wrapper.Services
     public class WeatherApiClient
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
         /**
          * URL Main Format: https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/[location]/[date1]/[date2]?key=YOUR_API_KEY
          * No [location]: 400 Error - Bad Request - A location must be provided https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/[date1]/[date2]?key=YOUR_API_KEY
@@ -32,7 +33,7 @@ namespace weather_wrapper.Services
          *      [No] make request, update cache then Return
          **/
 
-        public WeatherApiClient(HttpClient httpClient)
+        public WeatherApiClient(HttpClient httpClient, IConfiguration configuration)
         {
             if (httpClient == null) new HttpClient();
             else _httpClient = httpClient;
@@ -40,6 +41,8 @@ namespace weather_wrapper.Services
 
             _httpClient.DefaultRequestHeaders.Add(HeaderNames.Accept, MediaTypeNames.Application.Json);
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "My Weather Wrapper");
+
+            _configuration = configuration;
         }
 
         public async Task<Result<WeatherObject>> MakeWeatherRequestAsync(string path)
@@ -49,7 +52,10 @@ namespace weather_wrapper.Services
                 //var uriWithQuery = QueryHelpers.AddQueryString(path);
 
                 //var response = await _httpClient.GetAsync(uriWithQuery);
-                var response = await _httpClient.GetAsync(path);
+                string key = _configuration.GetValue<string>("APIToken");
+                if (key == null) return Result<WeatherObject>.Failure($"Unable to find valid API token in configs");
+
+                var response = await _httpClient.GetAsync(path + "?key=" + key);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -61,6 +67,7 @@ namespace weather_wrapper.Services
                 }
 
                 var jsonContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(jsonContent.ToString()); 
                 var weatherObject = JsonSerializer.Deserialize<WeatherObject>(jsonContent);
 
                 return Result<WeatherObject>.Success(weatherObject);
