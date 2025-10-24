@@ -82,7 +82,7 @@ namespace weather_wrapper.Controllers.MiddleWare
 
         public PreControllerMiddleWare(RequestDelegate next)
         {
-            _next = next ?? throw new ArgumentNullException(nameof(next));
+            _next = next ?? throw new ArgumentNullException(nameof(next));  
         }
         
         //public PreControllerMiddleWare(RequestDelegate next, ILogger<PreControllerMiddleWare> logger)

@@ -32,8 +32,8 @@ namespace weather_wrapper.Controllers
         {
             if (string.IsNullOrEmpty(location))
             {
-                return BadRequest("Location attribute cannot be empty");
-                //var resp = ResultFactory.Bad
+                var resp = ResultFactory.Error<WeatherObject>("Location attribute cannot be empty", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
             }
             //Dictionary<string, string> queryParams = validateAndRebuildParams();
             Result<WeatherObject> results = await _apiClient.GetDataAsync(HttpContext, location);
@@ -46,11 +46,13 @@ namespace weather_wrapper.Controllers
         {
             if (string.IsNullOrEmpty(location))
             {
-                return BadRequest("Location attribute cannot be empty");
+                var resp = ResultFactory.Error<WeatherObject>("Location attribute cannot be empty", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
             }
             if (numDays <= 0)
             {
-                return BadRequest("Number of days cannot be less than 1");
+                var resp = ResultFactory.Error<WeatherObject>("Number of days has to be greater than 0", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
             }
             // Validate params
             DateTime endDate = DateTime.Now;
@@ -70,35 +72,57 @@ namespace weather_wrapper.Controllers
         {
             if (string.IsNullOrEmpty(location))
             {
-                return BadRequest("Location attribute cannot be empty");
+                var resp = ResultFactory.Error<WeatherObject>("Location attribute cannot be empty", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
             }
-            var dateOfInterest = DateTime.Parse(startDate);
-            // Check if valid date
-            Result<WeatherObject> results = await _apiClient.GetDataAsync(
-                httpContext: HttpContext,
-                location: location,
-                startDate: dateOfInterest.ToString("yyyy-MM-dd")
-                );
-            return Ok(results);
+
+            try
+            {
+                var dateOfInterest = DateTime.Parse(startDate);
+
+                Result<WeatherObject> results = await _apiClient.GetDataAsync(
+                     httpContext: HttpContext,
+                        location: location,
+                        startDate: dateOfInterest.ToString("yyyy-MM-dd")
+                        );
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                var resp = ResultFactory.Error<WeatherObject>("Invalid date passed", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
+            }
+
         }
 
 
         [HttpGet("{location}/{startDateStr}/{endDateStr}")]
         public async Task<IActionResult> GetTimeRangeAsync(string location, string startDateStr, string endDateStr)
         {
-            DateTime startDate = DateTime.Parse(startDateStr);
-            DateTime endDate = DateTime.Parse(endDateStr);
+            try
+            {
 
-            if (string.IsNullOrEmpty(location))
-            {
-                return BadRequest("Location attribute cannot be empty");
+                DateTime startDate = DateTime.Parse(startDateStr);
+                DateTime endDate = DateTime.Parse(endDateStr);
+
+                if (string.IsNullOrEmpty(location))
+                {
+                    var resp = ResultFactory.Error<WeatherObject>("Location attribute cannot be empty", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                    return BadRequest(resp);
+                }
+                if (endDate < startDate)
+                {
+                    var resp = ResultFactory.Error<WeatherObject>("Start date cannot be after End date", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                    return BadRequest(resp);
+                }
+                Result<WeatherObject> results = await _apiClient.GetDataAsync(httpContext: HttpContext, location, startDateStr, endDateStr);
+                return Ok(results);
             }
-            if (endDate < startDate)
+            catch (Exception ex)
             {
-                return BadRequest("Start date cannot be after end date");
+                var resp = ResultFactory.Error<WeatherObject>("Invalid date passed", HttpContext.Request.Path.ToString(), 400, "Bad API Request");
+                return BadRequest(resp);
             }
-            Result<WeatherObject> results = await _apiClient.GetDataAsync(httpContext: HttpContext, location, startDateStr, endDateStr);
-            return Ok(results);
         }
     }
 }
