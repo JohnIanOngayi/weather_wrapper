@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
 using weather_wrapper.Models;
 using weather_wrapper.Models.Persistence;
@@ -12,6 +13,7 @@ namespace weather_wrapper.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        //private rea
         /**
          * URL Main Format: https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/[location]/[date1]/[date2]?key=YOUR_API_KEY
          * No [location]: 400 Error - Bad Request - A location must be provided https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/[date1]/[date2]?key=YOUR_API_KEY
@@ -45,17 +47,31 @@ namespace weather_wrapper.Services
             _configuration = configuration;
         }
 
-        public async Task<Result<WeatherObject>> MakeWeatherRequestAsync(string path)
+        private string BuildQueryString(Dictionary<string, string> queryParams)
+        {
+            var parameters = new List<string>();
+
+            foreach (var param in queryParams)
+            {
+                parameters.Add($"{param.Key}={Uri.EscapeDataString(param.Value)}");
+            }
+
+            return string.Join("&", parameters);
+        }
+
+        public async Task<Result<WeatherObject>> MakeWeatherRequestAsync(HttpContext httpContext, string path)
         {
             try
             {
-                //var uriWithQuery = QueryHelpers.AddQueryString(path);
+                var queryParams = httpContext.Items["SanitizedQueryParams"] as Dictionary<string, string> 
+                    ?? new Dictionary<string, string>();
 
-                //var response = await _httpClient.GetAsync(uriWithQuery);
-                //string key = _configuration.GetValue<string>("APIToken");
-                //if (key == null) return Result<WeatherObject>.Failure($"Unable to find valid API token in configs");
+                var pathBuilder = new StringBuilder($@"{_httpClient.BaseAddress}{path}");
+                var queryString = BuildQueryString(queryParams);
 
-                var response = await _httpClient.GetAsync(path);
+                var fullUriWithParams = $"{pathBuilder}?{queryString}";
+
+                var response = await _httpClient.GetAsync(fullUriWithParams);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -68,10 +84,9 @@ namespace weather_wrapper.Services
                 }
 
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine(jsonContent.ToString()); 
                 var weatherObject = JsonSerializer.Deserialize<WeatherObject>(jsonContent);
 
-                return ResultFactory.Success<WeatherObject>(weatherObject, path);
+                return ResultFactory.Success<WeatherObject>(weatherObject, httpContext.Request.Path);
             }
             catch (HttpRequestException ex)
             {
@@ -89,21 +104,21 @@ namespace weather_wrapper.Services
             }
         }
 
-        public async Task<Result<WeatherObject>> GetDataAsync(string location)
+        public async Task<Result<WeatherObject>> GetDataAsync(HttpContext httpContext, string location)
         {
-            return await MakeWeatherRequestAsync(location);
+            return await MakeWeatherRequestAsync(httpContext, location);
         }
 
-        public async Task<Result<WeatherObject>> GetDataAsync(string location, string startDate)
+        public async Task<Result<WeatherObject>> GetDataAsync(HttpContext httpContext, string location, string startDate)
         {
             string endPoint = $"{location}/{startDate}";
-            return await MakeWeatherRequestAsync(endPoint);
+            return await MakeWeatherRequestAsync(httpContext, endPoint);
         }
 
-        public async Task<Result<WeatherObject>> GetDataAsync(string location, string startDate, string endDate)
+        public async Task<Result<WeatherObject>> GetDataAsync(HttpContext httpContext, string location, string startDate, string endDate)
         {
             string endPoint = $"{location}/{startDate}/{endDate}";
-            return await MakeWeatherRequestAsync(endPoint);
+            return await MakeWeatherRequestAsync(httpContext, endPoint);
         }
     }
 }

@@ -1,3 +1,4 @@
+using weather_wrapper.Controllers.MiddleWare;
 using weather_wrapper.Services;
 
 internal class Program
@@ -25,6 +26,8 @@ internal class Program
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
+
+        app.UseMiddleware<PreControllerMiddleWare>();
 
         app.MapControllers();
 

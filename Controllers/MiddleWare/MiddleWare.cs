@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using weather_wrapper.Models.Persistence;
 
 namespace weather_wrapper.Controllers.MiddleWare
 {
@@ -76,6 +78,8 @@ namespace weather_wrapper.Controllers.MiddleWare
             "UTC", "GMT"
         };
 
+        private record class Unit { };
+
         public PreControllerMiddleWare(RequestDelegate next)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -135,8 +139,9 @@ namespace weather_wrapper.Controllers.MiddleWare
                 timestamp = DateTime.UtcNow,
                 path = context.Request.Path.ToString()
             };
+            var errorResp = ResultFactory.Error<Unit>(message, context.Request.Path.ToString(), 400, "Validation Failed");
 
-            await context.Response.WriteAsJsonAsync(errorResponse);
+            await context.Response.WriteAsJsonAsync(errorResp);
         }
 
         private Dictionary<string, string> ValidateAndSanitize(IQueryCollection query)

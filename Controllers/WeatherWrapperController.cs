@@ -24,7 +24,6 @@ namespace weather_wrapper.Controllers
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
-            
             return Ok(ResultFactory.Success<WeatherObject>(default));
         }
 
@@ -34,9 +33,10 @@ namespace weather_wrapper.Controllers
             if (string.IsNullOrEmpty(location))
             {
                 return BadRequest("Location attribute cannot be empty");
+                //var resp = ResultFactory.Bad
             }
             //Dictionary<string, string> queryParams = validateAndRebuildParams();
-            Result<WeatherObject> results = await _apiClient.GetDataAsync(location);
+            Result<WeatherObject> results = await _apiClient.GetDataAsync(HttpContext, location);
             return Ok(results);
         }
 
@@ -57,6 +57,7 @@ namespace weather_wrapper.Controllers
             DateTime startDate = endDate.AddDays(numDays * -1);
             // Add your logic here using startDate and endDate
             Result<WeatherObject> results = await _apiClient.GetDataAsync(
+                httpContext: HttpContext,
                 location,
                 startDate.ToString("yyyy-MM-dd"), endDate.ToString("yyyy-MM-dd")
                 );
@@ -74,6 +75,7 @@ namespace weather_wrapper.Controllers
             var dateOfInterest = DateTime.Parse(startDate);
             // Check if valid date
             Result<WeatherObject> results = await _apiClient.GetDataAsync(
+                httpContext: HttpContext,
                 location: location,
                 startDate: dateOfInterest.ToString("yyyy-MM-dd")
                 );
@@ -95,7 +97,7 @@ namespace weather_wrapper.Controllers
             {
                 return BadRequest("Start date cannot be after end date");
             }
-            Result<WeatherObject> results = await _apiClient.GetDataAsync(location, startDateStr, endDateStr);
+            Result<WeatherObject> results = await _apiClient.GetDataAsync(httpContext: HttpContext, location, startDateStr, endDateStr);
             return Ok(results);
         }
     }
