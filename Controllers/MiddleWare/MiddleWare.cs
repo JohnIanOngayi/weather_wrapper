@@ -111,7 +111,6 @@ namespace weather_wrapper.Controllers.MiddleWare
             {
                 //_logger.LogWarning(ex, "Validation failed for {Path}: {Message}",
                     //context.Request.Path, ex.Message);
-
                 await WriteErrorResponse(context, ex.Message);
             }
             catch (Exception ex)

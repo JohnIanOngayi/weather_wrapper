@@ -52,37 +52,40 @@ namespace weather_wrapper.Services
                 //var uriWithQuery = QueryHelpers.AddQueryString(path);
 
                 //var response = await _httpClient.GetAsync(uriWithQuery);
-                string key = _configuration.GetValue<string>("APIToken");
-                if (key == null) return Result<WeatherObject>.Failure($"Unable to find valid API token in configs");
+                //string key = _configuration.GetValue<string>("APIToken");
+                //if (key == null) return Result<WeatherObject>.Failure($"Unable to find valid API token in configs");
 
-                var response = await _httpClient.GetAsync(path + "?key=" + key);
+                var response = await _httpClient.GetAsync(path);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    return Result<WeatherObject>.Failure(
-                        $"API request failed: {errorContent}",
-                        (int)response.StatusCode
-                    );
+                    //return Result<WeatherObject>.Failure(
+                    //    $"API request failed: {errorContent}",
+                    //    (int)response.StatusCode
+                    //);
+                    return ResultFactory.Error<WeatherObject>(errorContent, path, (int)response.StatusCode, "API Request Failed");
                 }
 
                 var jsonContent = await response.Content.ReadAsStringAsync();
                 Console.WriteLine(jsonContent.ToString()); 
                 var weatherObject = JsonSerializer.Deserialize<WeatherObject>(jsonContent);
 
-                return Result<WeatherObject>.Success(weatherObject);
+                return ResultFactory.Success<WeatherObject>(weatherObject, path);
             }
             catch (HttpRequestException ex)
             {
-                return Result<WeatherObject>.Failure($"Network error: {ex.Message}");
+                //return Result<WeatherObject>.Failure($"Network error: {ex.Message}");
+                return ResultFactory.Exception<WeatherObject>(ex.Message, path, 500, "Network Error");
             }
             catch (JsonException ex)
             {
-                return Result<WeatherObject>.Failure($"JSON parsing error: {ex.Message}");
+                //return Result<WeatherObject>.Failure($"JSON parsing error: {ex.Message}");
+                return ResultFactory.Exception<WeatherObject>(ex.Message, path, 500, "JSON Parsing Error");
             }
             catch (Exception ex)
             {
-                return Result<WeatherObject>.Failure($"Unexpected error: {ex.Message}");
+                return ResultFactory.Exception<WeatherObject>(ex.Message, path, 500, "Unexpected Error");
             }
         }
 

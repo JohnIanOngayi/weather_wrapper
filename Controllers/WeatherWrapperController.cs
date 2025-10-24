@@ -24,7 +24,8 @@ namespace weather_wrapper.Controllers
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
-            return Ok("It Works");
+            
+            return Ok(ResultFactory.Success<WeatherObject>(default));
         }
 
         [HttpGet("{location}")]
